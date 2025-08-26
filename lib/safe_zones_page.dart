@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:flutter_google_places/flutter_google_places.dart';
-import 'package:google_maps_webservice/places.dart';
+import 'package:google_places_flutter/google_places_flutter.dart';
 
-const kGoogleApiKey = "YOUR_GOOGLE_MAPS_API_KEY"; // 🔹 Replace with your API Key
-final GoogleMapsPlaces _places = GoogleMapsPlaces(apiKey: kGoogleApiKey);
+const kGoogleApiKey = "AIzaSyBrCgWbxjdQLFbStBcrRAy864JN1N6FDlo"; // 🔹 Replace with your API Key
 
 class SafeZonesPage extends StatefulWidget {
+  const SafeZonesPage({super.key});
+
   @override
   _SafeZonesPageState createState() => _SafeZonesPageState();
 }
@@ -18,72 +18,59 @@ class _SafeZonesPageState extends State<SafeZonesPage> {
   final Set<Circle> _circles = {};
   int _zoneIdCounter = 1;
 
+  final TextEditingController searchController = TextEditingController();
+
   void _onMapCreated(GoogleMapController controller) {
     _mapController = controller;
   }
 
-  Future<void> _handleSearch() async {
-    Prediction? p = await PlacesAutocomplete.show(
-      context: context,
-      apiKey: kGoogleApiKey,
-      mode: Mode.overlay, // Fullscreen search
-      language: "en",
-      components: [Component(Component.country, "my")], // Limit to Malaysia
-    );
-
-    if (p != null) {
-      PlacesDetailsResponse detail = await _places.getDetailsByPlaceId(p.placeId!);
-      final lat = detail.result.geometry!.location.lat;
-      final lng = detail.result.geometry!.location.lng;
-
-      setState(() {
-        _center = LatLng(lat, lng);
-        _mapController.animateCamera(
-          CameraUpdate.newLatLngZoom(_center, 15),
-        );
-      });
-
-      _showSafeZoneDialog(_center);
-    }
+  void _moveToLocation(double lat, double lng) {
+    setState(() {
+      _center = LatLng(lat, lng);
+      _mapController.animateCamera(
+        CameraUpdate.newLatLngZoom(_center, 15),
+      );
+    });
+    _showSafeZoneDialog(_center);
   }
 
   void _showSafeZoneDialog(LatLng position) {
-    final TextEditingController _nameController = TextEditingController();
-    final TextEditingController _radiusController = TextEditingController();
+    final TextEditingController nameController = TextEditingController();
+    final TextEditingController radiusController = TextEditingController();
 
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text("Set Safe Zone"),
+        title: const Text("Set Safe Zone"),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
-              controller: _nameController,
-              decoration: InputDecoration(labelText: "Zone Name"),
+              controller: nameController,
+              decoration: const InputDecoration(labelText: "Zone Name"),
             ),
             TextField(
-              controller: _radiusController,
+              controller: radiusController,
               keyboardType: TextInputType.number,
-              decoration: InputDecoration(labelText: "Radius (meters)"),
+              decoration: const InputDecoration(labelText: "Radius (meters)"),
             ),
           ],
         ),
         actions: [
           TextButton(
-            child: Text("Cancel"),
+            child: const Text("Cancel"),
             onPressed: () => Navigator.pop(ctx),
           ),
           ElevatedButton(
-            child: Text("Save"),
+            child: const Text("Save"),
             onPressed: () {
-              final name = _nameController.text;
-              final radius = double.tryParse(_radiusController.text) ?? 200;
+              final name = nameController.text;
+              final radius = double.tryParse(radiusController.text) ?? 200;
 
               setState(() {
                 _markers.add(
                   Marker(
-                    markerId: MarkerId("zone_${_zoneIdCounter}"),
+                    markerId: MarkerId("zone_$_zoneIdCounter"),
                     position: position,
                     infoWindow: InfoWindow(title: name),
                   ),
@@ -91,7 +78,7 @@ class _SafeZonesPageState extends State<SafeZonesPage> {
 
                 _circles.add(
                   Circle(
-                    circleId: CircleId("circle_${_zoneIdCounter}"),
+                    circleId: CircleId("circle_$_zoneIdCounter"),
                     center: position,
                     radius: radius,
                     fillColor: Colors.blue.withOpacity(0.2),
@@ -126,37 +113,40 @@ class _SafeZonesPageState extends State<SafeZonesPage> {
             circles: _circles,
           ),
 
-          // 🔹 Search Button (Floating on top)
+          // 🔹 Search Autocomplete Field
           Positioned(
             top: 40,
             left: 16,
             right: 16,
-            child: GestureDetector(
-              onTap: _handleSearch,
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
+            child: GooglePlaceAutoCompleteTextField(
+              textEditingController: searchController,
+              googleAPIKey: kGoogleApiKey,
+              inputDecoration: InputDecoration(
+                hintText: "Search location...",
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 6,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.search, color: Colors.grey),
-                    SizedBox(width: 8),
-                    Text(
-                      "Search location...",
-                      style: TextStyle(color: Colors.grey[600]),
-                    ),
-                  ],
                 ),
               ),
+              debounceTime: 600,
+              countries: const ["my"], // limit to Malaysia
+              isLatLngRequired: true,
+              getPlaceDetailWithLatLng: (prediction) {
+                final lat = double.tryParse(prediction.lat ?? "0") ?? 0;
+                final lng = double.tryParse(prediction.lng ?? "0") ?? 0;
+                if (lat != 0 && lng != 0) {
+                  _moveToLocation(lat, lng);
+                }
+              },
+              itemClick: (prediction) {
+                searchController.text = prediction.description ?? "";
+                searchController.selection = TextSelection.fromPosition(
+                  TextPosition(offset: searchController.text.length),
+                );
+              },
             ),
           ),
         ],

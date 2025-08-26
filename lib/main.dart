@@ -9,6 +9,8 @@ void main() {
 }
 
 class SecureChildApp extends StatelessWidget {
+  const SecureChildApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -23,6 +25,8 @@ class SecureChildApp extends StatelessWidget {
 }
 
 class SecureChildHomePage extends StatefulWidget {
+  const SecureChildHomePage({super.key});
+
   @override
   _SecureChildHomePageState createState() => _SecureChildHomePageState();
 }

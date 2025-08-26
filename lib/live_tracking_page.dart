@@ -1,15 +1,44 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class LiveTrackingPage extends StatefulWidget {
+  const LiveTrackingPage({super.key});
+
   @override
   _LiveTrackingPageState createState() => _LiveTrackingPageState();
 }
 
 class _LiveTrackingPageState extends State<LiveTrackingPage> {
+
   late GoogleMapController mapController;
 
   final LatLng _center = const LatLng(3.1390, 101.6869); // Kuala Lumpur
+  bool _locationPermissionGranted = false;
+
+  final Set<Marker> _markers = {};
+  final Set<Circle> _circles = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _checkLocationPermission();
+  }
+
+  Future<void> _checkLocationPermission() async {
+    var status = await Permission.location.request();
+
+    if (status.isGranted) {
+      setState(() {
+        _locationPermissionGranted = true;
+      });
+    } else {
+      setState(() {
+        _locationPermissionGranted = false;
+      });
+    }
+  }
 
   void _onMapCreated(GoogleMapController controller) {
     mapController = controller;
@@ -42,9 +71,15 @@ class _LiveTrackingPageState extends State<LiveTrackingPage> {
             onMapCreated: _onMapCreated,
             initialCameraPosition: CameraPosition(
               target: _center,
-              zoom: 14.0,
+              zoom: 12,
             ),
+            markers: _markers,
+            circles: _circles,
+            myLocationEnabled: _locationPermissionGranted,
+            myLocationButtonEnabled: true,
           ),
+
+
 
           // Floating Last Update Card
           Positioned(

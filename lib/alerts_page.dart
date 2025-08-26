@@ -19,6 +19,8 @@ class AlertsPage extends StatelessWidget {
     },
   ];
 
+  AlertsPage({super.key});
+
   Color _getAlertColor(String type) {
     switch (type) {
       case "danger":

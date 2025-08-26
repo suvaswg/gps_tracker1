@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "747274559503",
+    "firebase_url": "https://childtracker-5ec90-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "childtracker-5ec90",
+    "storage_bucket": "childtracker-5ec90.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:747274559503:android:4b4fc8d20652ccb720c37a",
+        "android_client_info": {
+          "package_name": "com.example.gps_tracker1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBNbcCO0xFrLrnuZEuuGLrly9VKinc25L0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
